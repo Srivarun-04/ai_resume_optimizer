@@ -1,0 +1,10 @@
+.DS_Store
+<<<<<<< HEAD
+=======
+.env
+>>>>>>> 29f8407a913a0ff4320902be911f4caf09a14d12
+/node_modules/
+
+# React Router
+/.react-router/
+/build/
