@@ -69,8 +69,6 @@ interface PuterStore {
     ai: {
         chat: (
             prompt: string | ChatMessage[],
-            imageURL?: string | PuterChatOptions,
-            testMode?: boolean,
             options?: PuterChatOptions
         ) => Promise<AIResponse | undefined>;
         feedback: (
@@ -323,8 +321,6 @@ export const usePuterStore = create<PuterStore>((set, get) => {
 
     const chat = async (
         prompt: string | ChatMessage[],
-        imageURL?: string | PuterChatOptions,
-        testMode?: boolean,
         options?: PuterChatOptions
     ) => {
         const puter = getPuter();
@@ -332,10 +328,18 @@ export const usePuterStore = create<PuterStore>((set, get) => {
             setError("Puter.js not available");
             return;
         }
-        // return puter.ai.chat(prompt, imageURL, testMode, options);
-        return puter.ai.chat(prompt, imageURL, testMode, options) as Promise<
-            AIResponse | undefined
-        >;
+
+        try {
+            console.log("DEBUG: Calling AI model (chat) =", AI_MODEL);
+            const res = await puter.ai.chat(
+                prompt,
+                { model: AI_MODEL, ...options }
+            ) as AIResponse | undefined;
+            return res;
+        } catch (e) {
+            console.error("Error calling puter.ai.chat:", e);
+            throw e; // rethrow so the component can handle it
+        }
     };
     const feedback = async (path: string, message: string) => {
         const puter = getPuter();
@@ -456,10 +460,8 @@ export const usePuterStore = create<PuterStore>((set, get) => {
         ai: {
             chat: (
                 prompt: string | ChatMessage[],
-                imageURL?: string | PuterChatOptions,
-                testMode?: boolean,
                 options?: PuterChatOptions
-            ) => chat(prompt, imageURL, testMode, options),
+            ) => chat(prompt, options),
             feedback: (path: string, message: string) => feedback(path, message),
             img2txt: (image: string | File | Blob, testMode?: boolean) =>
                 img2txt(image, testMode),

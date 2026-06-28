@@ -2,7 +2,7 @@ import { Link, useParams, useNavigate } from "react-router";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { usePuterStore } from "~/lib/puter";
 import { cn, normalizeFeedback } from "~/lib/utils";
-import { prepareInterviewInstructions, generateAIAnswerPrompt, INTERVIEW_PREP_VERSION, AI_MODEL } from "../../constants";
+import { prepareInterviewInstructions, generateAIAnswerPrompt, INTERVIEW_PREP_VERSION } from "../../constants";
 
 export const meta = () => ([
     { title: "Resumind | Interview Preparation" },
@@ -445,7 +445,7 @@ export default function InterviewPreparation() {
                 let aiResult: InterviewPrepData | null = null;
 
                 try {
-                    const response = await ai.chat(prompt, { model: AI_MODEL });
+                    const response = await ai.chat(prompt);
                     if (response) {
                         const content = typeof response.message?.content === "string"
                             ? response.message.content
@@ -542,8 +542,15 @@ export default function InterviewPreparation() {
 
     // Generate AI answer for a specific question (lazy, on-demand)
     const handleShowAIAnswer = useCallback(async (questionKey: string, questionText: string, projectContext?: string) => {
-        if (aiAnswers[questionKey] || loadingAnswer === questionKey) return;
+        console.log("--------------------------------------------------");
+        console.log(`[DEBUG] 1. Button click fired for question: ${questionKey}`);
+        
+        if (aiAnswers[questionKey] || loadingAnswer === questionKey) {
+            console.log(`[DEBUG] Skipping generation. Already generated or currently loading.`);
+            return;
+        }
 
+        console.log(`[DEBUG] 2. AI generation function (handleShowAIAnswer) is being called.`);
         setLoadingAnswer(questionKey);
         setAiErrors(prev => {
             const newErrors = { ...prev };
@@ -564,48 +571,51 @@ export default function InterviewPreparation() {
                 projectContext: projectContext || "",
             });
 
-            console.log("=== AI Answer Generation Request ===");
-            console.log("Model:", AI_MODEL);
-            console.log("Prompt:", prompt);
-
             const timeoutPromise = new Promise((_, reject) => 
                 setTimeout(() => reject(new Error("AI generation timed out after 30 seconds")), 30000)
             );
 
-            // Pass AI_MODEL in options
             const response = await Promise.race([
-                ai.chat(prompt, { model: AI_MODEL }),
+                ai.chat(prompt),
                 timeoutPromise
             ]) as any;
 
-            console.log("Raw AI Response:", response);
+            console.log(`[DEBUG] 8. Raw API response:`, response);
+            console.log(`[DEBUG] 9. HTTP status code: (Puter JS SDK abstracts this, check raw response metadata if any)`);
 
             if (response) {
-                const content = typeof response.message?.content === "string"
+                const content = typeof response?.message?.content === "string"
                     ? response.message.content
-                    : response.message?.content?.[0]?.text || "";
+                    : response?.message?.content?.[0]?.text || "";
 
                 let cleanedText = content.trim();
                 if (cleanedText.startsWith("```")) {
                     cleanedText = cleanedText.replace(/^```(?:json)?\n?/i, "").replace(/```$/, "").trim();
                 }
 
-                console.log("Cleaned Text:", cleanedText);
+                console.log(`[DEBUG] Cleaned Text to parse:\n${cleanedText}`);
                 const parsed = JSON.parse(cleanedText) as AIAnswer;
-                console.log("Parsed Response:", parsed);
+                console.log(`[DEBUG] 11. Parsed response:`, parsed);
                 
                 if (!parsed.idealAnswer || !parsed.keyPoints) {
-                    throw new Error("Parsed response is missing required fields");
+                    throw new Error(`Parsed response is missing required fields. Parsed output: ${JSON.stringify(parsed)}`);
                 }
                 
+                console.log(`[DEBUG] 12. Final value returned to UI:`, parsed);
                 setAiAnswers(prev => ({ ...prev, [questionKey]: parsed }));
+                console.log("--------------------------------------------------");
             } else {
-                throw new Error("No response from AI");
+                throw new Error("No response from AI (response is null/undefined)");
             }
-        } catch (e) {
-            console.error("Failed to generate AI answer:", e);
-            const errorMsg = e instanceof Error ? e.message : "An unknown error occurred.";
+        } catch (e: any) {
+            console.error("[DEBUG] 10. Exception caught!");
+            console.error(e);
+            if (e?.stack) console.error("Stack trace:", e.stack);
+            
+            const errorMsg = e instanceof Error ? `${e.name}: ${e.message}` : JSON.stringify(e);
+            console.log(`[DEBUG] Setting error state for UI: ${errorMsg}`);
             setAiErrors(prev => ({ ...prev, [questionKey]: errorMsg }));
+            console.log("--------------------------------------------------");
         } finally {
             setLoadingAnswer(null);
         }
@@ -848,9 +858,9 @@ export default function InterviewPreparation() {
                                             {/* Show AI Answer Button */}
                                             <div className="mt-3 pl-7">
                                                 {aiErrors[qKey] && (
-                                                    <div className="mb-2 text-[10px] text-red-600 bg-red-50 p-2 rounded border border-red-100 flex items-center gap-1.5">
-                                                        <span>⚠️</span>
-                                                        <span>Failed to generate answer. Please try again.</span>
+                                                    <div className="mb-2 text-[10px] text-red-600 bg-red-50 p-2 rounded border border-red-100 flex items-start gap-1.5 overflow-auto max-w-full">
+                                                        <span className="mt-0.5 shrink-0">⚠️</span>
+                                                        <span className="font-mono whitespace-pre-wrap break-all">{aiErrors[qKey]}</span>
                                                     </div>
                                                 )}
                                                 {!aiAnswers[qKey] && (
@@ -935,9 +945,9 @@ export default function InterviewPreparation() {
                                                                 {/* Show AI Answer Button */}
                                                                 <div className="mt-2">
                                                                     {aiErrors[rqKey] && (
-                                                                        <div className="mb-2 text-[10px] text-red-600 bg-red-50 p-2 rounded border border-red-100 flex items-center gap-1.5">
-                                                                            <span>⚠️</span>
-                                                                            <span>Failed to generate answer. Please try again.</span>
+                                                                        <div className="mb-2 text-[10px] text-red-600 bg-red-50 p-2 rounded border border-red-100 flex items-start gap-1.5 overflow-auto max-w-full">
+                                                                            <span className="mt-0.5 shrink-0">⚠️</span>
+                                                                            <span className="font-mono whitespace-pre-wrap break-all">{aiErrors[rqKey]}</span>
                                                                         </div>
                                                                     )}
                                                                     {!aiAnswers[rqKey] && (

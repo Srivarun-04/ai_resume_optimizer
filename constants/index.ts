@@ -1,103 +1,103 @@
-export const AI_MODEL = "claude-3-5-sonnet";
+export const AI_MODEL = "claude-haiku-4-5";
 
 export const defaultMockFeedback: Feedback = {
-    atsScore: {
-        overallScore: 85,
-        ats: 90,
-        skills: 90,
-        content: 90,
-        structure: 90,
-        toneAndStyle: 90
-    },
-    strengths: [
-        { tip: "Strong Technical Baseline", explanation: "Solid experience in core web technologies.", category: "Skills" }
+  atsScore: {
+    overallScore: 85,
+    ats: 90,
+    skills: 90,
+    content: 90,
+    structure: 90,
+    toneAndStyle: 90
+  },
+  strengths: [
+    { tip: "Strong Technical Baseline", explanation: "Solid experience in core web technologies.", category: "Skills" }
+  ],
+  weaknesses: [
+    { tip: "Missing Testing Experience", explanation: "No unit testing frameworks mentioned.", category: "Structure" }
+  ],
+  suggestions: [
+    { tip: "Add Testing Frameworks", explanation: "Add Jest/Cypress to list of skills.", category: "Content" }
+  ],
+  careerAnalysis: {
+    recommendedRoles: ["Frontend Architect", "React Developer", "UI Engineer"],
+    matchingSkills: ["React", "HTML5", "CSS3", "JavaScript"],
+    missingSkills: ["TypeScript", "Next.js", "Jest"],
+    roleDescriptions: [
+      "Designs frontend system architecture and guidelines.",
+      "Specializes in building components and state workflows using React.",
+      "Implements pixel-perfect styles and layout systems."
+    ]
+  },
+  interviewPrep: {
+    technicalQuestions: [
+      { question: "What is Virtual DOM?", answer: "React representation of real DOM elements." }
     ],
-    weaknesses: [
-        { tip: "Missing Testing Experience", explanation: "No unit testing frameworks mentioned.", category: "Structure" }
+    behavioralQuestions: [
+      { question: "Tell me about a conflict.", answer: "Describe situation, task, action, and results." }
     ],
-    suggestions: [
-        { tip: "Add Testing Frameworks", explanation: "Add Jest/Cypress to list of skills.", category: "Content" }
+    resumeBasedQuestions: [
+      { question: "Explain project X scaling.", answer: "Detail caching and request management." }
+    ]
+  },
+  roadmap: {
+    day30: [
+      { task: "Learn TypeScript basics", details: "Review compiler options and strict typing." }
     ],
-    careerAnalysis: {
-        recommendedRoles: ["Frontend Architect", "React Developer", "UI Engineer"],
-        matchingSkills: ["React", "HTML5", "CSS3", "JavaScript"],
-        missingSkills: ["TypeScript", "Next.js", "Jest"],
-        roleDescriptions: [
-            "Designs frontend system architecture and guidelines.",
-            "Specializes in building components and state workflows using React.",
-            "Implements pixel-perfect styles and layout systems."
-        ]
-    },
-    interviewPrep: {
-        technicalQuestions: [
-            { question: "What is Virtual DOM?", answer: "React representation of real DOM elements." }
-        ],
-        behavioralQuestions: [
-            { question: "Tell me about a conflict.", answer: "Describe situation, task, action, and results." }
-        ],
-        resumeBasedQuestions: [
-            { question: "Explain project X scaling.", answer: "Detail caching and request management." }
-        ]
-    },
-    roadmap: {
-        day30: [
-            { task: "Learn TypeScript basics", details: "Review compiler options and strict typing." }
-        ],
-        day60: [
-            { task: "Build Next.js dashboard", details: "Implement Server Components and actions." }
-        ]
-    }
+    day60: [
+      { task: "Build Next.js dashboard", details: "Implement Server Components and actions." }
+    ]
+  }
 };
 
 export const resumes: Resume[] = [
-    {
-        id: "1",
-        companyName: "Google",
-        jobTitle: "Frontend Developer",
-        imagePath: "/images/resume_01.png",
-        resumePath: "/resumes/resume-1.pdf",
-        feedback: defaultMockFeedback,
-    },
-    {
-        id: "2",
-        companyName: "Microsoft",
-        jobTitle: "Cloud Engineer",
-        imagePath: "/images/resume_02.png",
-        resumePath: "/resumes/resume-2.pdf",
-        feedback: defaultMockFeedback,
-    },
-    {
-        id: "3",
-        companyName: "Apple",
-        jobTitle: "iOS Developer",
-        imagePath: "/images/resume_03.png",
-        resumePath: "/resumes/resume-3.pdf",
-        feedback: defaultMockFeedback,
-    },
-    {
-        id: "4",
-        companyName: "Google",
-        jobTitle: "Frontend Developer",
-        imagePath: "/images/resume_01.png",
-        resumePath: "/resumes/resume-1.pdf",
-        feedback: defaultMockFeedback,
-    },
-    {
-        id: "5",
-        companyName: "Microsoft",
-        jobTitle: "Cloud Engineer",
-        imagePath: "/images/resume_02.png",
-        resumePath: "/resumes/resume-2.pdf",
-        feedback: defaultMockFeedback,
-    },
-    {
-        id: "6",
-        companyName: "Apple",
-        jobTitle: "iOS Developer",
-        imagePath: "/images/resume_03.png",
-        resumePath: "/resumes/resume-3.pdf",
-        feedback: defaultMockFeedback,
-    },
+  {
+    id: "1",
+    companyName: "Google",
+    jobTitle: "Frontend Developer",
+    imagePath: "/images/resume_01.png",
+    resumePath: "/resumes/resume-1.pdf",
+    feedback: defaultMockFeedback,
+  },
+  {
+    id: "2",
+    companyName: "Microsoft",
+    jobTitle: "Cloud Engineer",
+    imagePath: "/images/resume_02.png",
+    resumePath: "/resumes/resume-2.pdf",
+    feedback: defaultMockFeedback,
+  },
+  {
+    id: "3",
+    companyName: "Apple",
+    jobTitle: "iOS Developer",
+    imagePath: "/images/resume_03.png",
+    resumePath: "/resumes/resume-3.pdf",
+    feedback: defaultMockFeedback,
+  },
+  {
+    id: "4",
+    companyName: "Google",
+    jobTitle: "Frontend Developer",
+    imagePath: "/images/resume_01.png",
+    resumePath: "/resumes/resume-1.pdf",
+    feedback: defaultMockFeedback,
+  },
+  {
+    id: "5",
+    companyName: "Microsoft",
+    jobTitle: "Cloud Engineer",
+    imagePath: "/images/resume_02.png",
+    resumePath: "/resumes/resume-2.pdf",
+    feedback: defaultMockFeedback,
+  },
+  {
+    id: "6",
+    companyName: "Apple",
+    jobTitle: "iOS Developer",
+    imagePath: "/images/resume_03.png",
+    resumePath: "/resumes/resume-3.pdf",
+    feedback: defaultMockFeedback,
+  },
 ];
 
 export const AIResponseFormat = `
@@ -148,8 +148,8 @@ export const AIResponseFormat = `
       }
 `;
 
-export const prepareInstructions = ({jobTitle, jobDescription}: { jobTitle: string; jobDescription: string; }) =>
-    `You are an expert in ATS (Applicant Tracking System), resume analysis, technical recruitment, and career coaching.
+export const prepareInstructions = ({ jobTitle, jobDescription }: { jobTitle: string; jobDescription: string; }) =>
+  `You are an expert in ATS (Applicant Tracking System), resume analysis, technical recruitment, and career coaching.
       Please analyze and rate this resume and suggest how to improve it.
       The rating can be low if the resume is bad.
       Be thorough and detailed. Point out errors, structural mistakes, or weak bullets.
@@ -212,25 +212,25 @@ export const InterviewPrepResponseFormat = `
 `;
 
 export const prepareInterviewInstructions = ({
-    jobTitle,
-    jobDescription,
-    extractedSkills,
-    matchingSkills,
-    missingSkills,
-    recommendedRoles,
-    strengths,
-    weaknesses,
+  jobTitle,
+  jobDescription,
+  extractedSkills,
+  matchingSkills,
+  missingSkills,
+  recommendedRoles,
+  strengths,
+  weaknesses,
 }: {
-    jobTitle: string;
-    jobDescription: string;
-    extractedSkills: string[];
-    matchingSkills: string[];
-    missingSkills: string[];
-    recommendedRoles: string[];
-    strengths: string[];
-    weaknesses: string[];
+  jobTitle: string;
+  jobDescription: string;
+  extractedSkills: string[];
+  matchingSkills: string[];
+  missingSkills: string[];
+  recommendedRoles: string[];
+  strengths: string[];
+  weaknesses: string[];
 }) =>
-    `You are an expert technical interviewer, career coach, and coding interview strategist.
+  `You are an expert technical interviewer, career coach, and coding interview strategist.
       Based on the following candidate profile, generate a comprehensive and PERSONALIZED interview preparation package.
 
       CANDIDATE PROFILE:
@@ -258,30 +258,37 @@ export const prepareInterviewInstructions = ({
       Return ONLY the raw JSON object, without markdown code block syntax (like \`\`\`json), and do not output any other introduction, remarks, or conversational text.`;
 
 export const generateAIAnswerPrompt = ({
-    question,
-    jobTitle,
-    extractedSkills,
-    projectContext,
+  question,
+  jobTitle,
+  extractedSkills,
+  projectContext,
 }: {
-    question: string;
-    jobTitle: string;
-    extractedSkills: string[];
-    projectContext: string;
+  question: string;
+  jobTitle: string;
+  extractedSkills: string[];
+  projectContext: string;
 }) =>
-    `You are an expert interview coach helping a candidate prepare for a ${jobTitle} position.
+  `You are an expert technical interviewer and career coach. Your task is to provide a QUICK, highly readable interview cheat sheet for a ${jobTitle} position. 
+The tone must be practical, concise, and focused on real interview expectations—not a textbook explanation.
 
 The candidate has skills in: ${extractedSkills.join(", ")}
 ${projectContext ? `Relevant project context: ${projectContext}` : ""}
 
-Generate a model interview answer for this question:
+Question to answer:
 "${question}"
+
+Generate the response strictly following these constraints:
+1. idealAnswer: 3-5 concise sentences (MAX 120 words). You must briefly explain the concept, mention ONE real-world application, and weave in ONE relevant example from the candidate's resume/skills. No fluff.
+2. keyPoints: Maximum 4 bullets. Each bullet must be a single, punchy takeaway the interviewer expects. No paragraphs.
+3. commonMistakes: Maximum 3 bullets. Each bullet must be exactly one short sentence.
+4. followUpQuestions: Maximum 3 questions that get progressively deeper.
 
 Respond in this exact JSON format:
 {
-  "idealAnswer": "A detailed, well-structured ideal answer (3-5 sentences) that is specific to the candidate's skills and experience. Not generic.",
-  "keyPoints": ["Point 1 the interviewer expects", "Point 2", "Point 3"],
-  "commonMistakes": ["Mistake 1 to avoid", "Mistake 2 to avoid", "Mistake 3 to avoid"],
-  "followUpQuestions": ["Likely follow-up question 1", "Likely follow-up question 2"]
+  "idealAnswer": "...",
+  "keyPoints": ["...", "...", "..."],
+  "commonMistakes": ["...", "...", "..."],
+  "followUpQuestions": ["...", "...", "..."]
 }
 
 Return ONLY the raw JSON object, without markdown code block syntax.`;
