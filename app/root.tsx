@@ -11,8 +11,22 @@ import type { Route } from "./+types/root";
 import "./app.css";
 import {usePuterStore} from "~/lib/puter";
 import {useEffect} from "react";
+import Footer from "~/components/Footer";
+
+export const meta: Route.MetaFunction = () => [
+  { title: "ResumeIQ | AI Resume & Career Analyzer" },
+  { name: "description", content: "AI-powered Resume & Career Analyzer with ATS scoring, Career Guidance, Learning Roadmaps and Interview Preparation." },
+  { name: "keywords", content: "Resume Analyzer, ATS Checker, Career Guidance, Interview Preparation, Resume AI, React, TypeScript" },
+  { name: "author", content: "Srivarun Manthena" },
+  { name: "theme-color", content: "#5B5FEF" },
+  { property: "og:title", content: "ResumeIQ | AI Resume & Career Analyzer" },
+  { property: "og:description", content: "AI-powered Resume & Career Analyzer with ATS scoring, Career Guidance, Learning Roadmaps and Interview Preparation." },
+  { property: "og:type", content: "website" },
+  { property: "og:image", content: "/images/placeholder-og.png" }
+];
 
 export const links: Route.LinksFunction = () => [
+  { rel: "icon", href: "/images/logo.png" },
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
   {
     rel: "preconnect",
@@ -40,9 +54,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Meta />
         <Links />
       </head>
-      <body suppressHydrationWarning>
+      <body suppressHydrationWarning className="flex flex-col min-h-screen">
         <script src="https://js.puter.com/v2/"></script>
-        {children}
+        <div className="flex-1">
+          {children}
+        </div>
+        <Footer />
         <ScrollRestoration />
         <Scripts />
       </body>

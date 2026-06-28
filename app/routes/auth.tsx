@@ -3,7 +3,7 @@ import {useEffect} from "react";
 import {useLocation, useNavigate} from "react-router";
 
 export const meta = () => ([
-    { title: 'Resumind | Auth' },
+    { title: 'ResumeIQ | Auth' },
     { name: 'description', content: 'Log into your account' },
 ])
 
@@ -14,8 +14,8 @@ const Auth = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        if(auth.isAuthenticated) navigate(next);
-    }, [auth.isAuthenticated, next])
+        if(auth.isAuthenticated) navigate(next || '/');
+    }, [auth.isAuthenticated, next, navigate])
 
     return (
         <main className="bg-[url('/images/bg-auth.svg')] bg-cover min-h-screen flex items-center justify-center">

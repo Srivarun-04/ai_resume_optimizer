@@ -278,10 +278,10 @@ Question to answer:
 "${question}"
 
 Generate the response strictly following these constraints:
-1. idealAnswer: 3-5 concise sentences (MAX 120 words). You must briefly explain the concept, mention ONE real-world application, and weave in ONE relevant example from the candidate's resume/skills. No fluff.
-2. keyPoints: Maximum 4 bullets. Each bullet must be a single, punchy takeaway the interviewer expects. No paragraphs.
-3. commonMistakes: Maximum 3 bullets. Each bullet must be exactly one short sentence.
-4. followUpQuestions: Maximum 3 questions that get progressively deeper.
+1. idealAnswer: 3-5 concise sentences (MAX 80 words). You must briefly explain the concept, mention ONE real-world application, and weave in ONE relevant example from the candidate's resume/skills. No fluff.
+2. keyPoints: Maximum 3 bullets. Each bullet must be a single, punchy takeaway the interviewer expects. No paragraphs.
+3. commonMistakes: Maximum 2 bullets. Each bullet must be exactly one short sentence.
+4. followUpQuestions: Maximum 2 questions that get progressively deeper.
 
 Respond in this exact JSON format:
 {

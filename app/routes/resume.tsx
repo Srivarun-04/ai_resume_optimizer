@@ -4,8 +4,8 @@ import {usePuterStore} from "~/lib/puter";
 import {cn, normalizeFeedback} from "~/lib/utils";
 
 export const meta = () => ([
-    { title: 'Resumind | Review ' },
-    { name: 'description', content: 'Detailed overview of your resume' },
+    { title: 'Resume Analysis | ResumeIQ' },
+    { name: 'description', content: 'AI Analysis of your resume' },
 ])
 
 /* ── Tiny reusable pieces ─────────────────────────────────── */
@@ -132,10 +132,7 @@ const Resume = () => {
                     {/* ── LEFT: Resume preview ── */}
                     <aside className="dash-preview">
                         {imageUrl && resumeUrl ? (
-                            <a href={resumeUrl} target="_blank" rel="noopener noreferrer"
-                                className="block gradient-border !p-2 h-full">
-                                <img src={imageUrl} className="w-full h-full object-contain rounded-xl" title="resume" />
-                            </a>
+                            <iframe src={`${resumeUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`} className="w-full h-[85vh] border-0 rounded-xl" title="resume preview" />
                         ) : (
                             <div className="flex items-center justify-center h-full">
                                 <img src="/images/resume-scan-2.gif" className="w-32" />

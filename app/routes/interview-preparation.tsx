@@ -5,8 +5,8 @@ import { cn, normalizeFeedback } from "~/lib/utils";
 import { prepareInterviewInstructions, generateAIAnswerPrompt, INTERVIEW_PREP_VERSION } from "../../constants";
 
 export const meta = () => ([
-    { title: "Resumind | Interview Preparation" },
-    { name: "description", content: "AI-powered interview preparation based on your resume and target role" },
+    { title: "Interview Preparation | ResumeIQ" },
+    { name: "description", content: "Prepare for interviews with AI generated questions." },
 ]);
 
 /* ── Reusable tiny components ─────────────────────────────── */

@@ -20,10 +20,10 @@ interface RoadmapData {
     day60: RoadmapItem[];
 }
 
-export const meta = () => [
-    { title: "Resumind | Career Guidance Report" },
-    { name: "description", content: "Professional career pathways and guidance report based on your skills" },
-];
+export const meta = () => ([
+    { title: 'Career Guidance | ResumeIQ' },
+    { name: 'description', content: 'AI Analysis of your career path' },
+]);
 
 const getRoleMetrics = (roleName: string) => {
     const name = roleName.toLowerCase();

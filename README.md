@@ -1,141 +1,144 @@
-# AI Resume & Career Analyzer
-
-An AI-powered Resume Analyzer built using React, Tailwind CSS, Vite, React Router and Puter AI.
-
 <div align="center">
-  <img alt="React" src="https://img.shields.io/badge/React-4c84f3?style=for-the-badge&logo=react&logoColor=white">
-  <img alt="Tailwind CSS" src="https://img.shields.io/badge/-Tailwind-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" />
-  <img alt="TypeScript" src="https://img.shields.io/badge/-TypeScript-black?style=for-the-badge&logoColor=white&logo=typescript&color=3178C6" />
-  <img alt="Puter.js" src="https://img.shields.io/badge/Puter.js-181758?style=for-the-badge&logoColor=white">
-  <img alt="Vite" src="https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white">
+  <img src="public/images/logo.png" alt="ResumeIQ Logo" width="120" />
+  <h1>ResumeIQ</h1>
+  <h3>Analyze. Improve. Get Hired.</h3>
+  <p>An AI-powered Resume & Career Analyzer built to accelerate your career growth.</p>
 </div>
+
+---
+
+## 📖 Overview
+
+**ResumeIQ** is an advanced, AI-driven platform designed to help job seekers optimize their resumes, navigate applicant tracking systems (ATS), and prepare for interviews. By leveraging cutting-edge AI, ResumeIQ provides deep, actionable insights into your professional profile, seamlessly extracting skills, identifying critical gaps, and paving a personalized roadmap to land your dream role.
 
 ---
 
 ## ✨ Features
 
-- 📄 **Resume Upload (PDF)** — Upload your resume and have it stored securely on Puter cloud storage.
-- 🎯 **ATS Score Analysis** — Get an Applicant Tracking System compatibility score with actionable tips.
-- 💬 **Resume Feedback** — Receive detailed AI-generated feedback on tone & style, content, structure, and skills.
-- 💡 **Resume Improvement Suggestions** — Categorized suggestions to strengthen your resume for any role.
-- 🛠️ **Technical Skill Extraction** — Automatically extracts all technical skills mentioned in your resume.
-- 🎯 **Career Role Recommendation** — Get top 3 recommended job roles based on your extracted skills, with confidence percentages.
-- 📊 **Compact Dashboard View** — All analysis results displayed in a single-screen dashboard layout (30% preview / 70% analysis).
-- 🔐 **Browser-Based Auth** — Seamless authentication via Puter.js — no backend required.
-- 📱 **Responsive Design** — Fully responsive across desktop, tablet, and mobile.
-
-## ⚙️ Tech Stack
-
-| Technology | Purpose |
-|---|---|
-| **[React](https://react.dev/)** | UI library for building component-based interfaces |
-| **[React Router v7](https://reactrouter.com/)** | Client-side routing with nested routes and data loading |
-| **[Tailwind CSS](https://tailwindcss.com/)** | Utility-first CSS framework for rapid styling |
-| **[TypeScript](https://www.typescriptlang.org/)** | Static typing for better developer experience and code quality |
-| **[Vite](https://vite.dev/)** | Fast build tool with HMR and optimized production builds |
-| **[Puter.js](https://puter.com/)** | Serverless SDK for auth, file storage, KV database, and AI |
-| **[Claude AI](https://www.anthropic.com/)** | LLM used via Puter AI for resume analysis and skill extraction |
-| **[Zustand](https://github.com/pmndrs/zustand)** | Lightweight state management for React |
-| **[pdf.js](https://mozilla.github.io/pdf.js/)** | PDF rendering and conversion to image for preview |
-
-## 📂 Project Structure
-
-```
-ai-resume-analyzer/
-├── app/
-│   ├── components/       # Reusable UI components (Navbar, FileUploader, Accordion, etc.)
-│   ├── routes/           # Page components (home, upload, resume, auth, wipe)
-│   ├── lib/              # Utilities and Puter SDK wrapper (puter.ts, utils.ts, pdf2img.ts)
-│   └── app.css           # Global styles and design tokens
-├── constants/            # AI prompt templates and mock data
-├── types/                # TypeScript type definitions (Feedback, Resume, Puter types)
-├── public/               # Static assets (images, icons)
-└── vite.config.ts        # Vite configuration
-```
-
-## 🤸 Quick Start
-
-### Prerequisites
-
-- [Git](https://git-scm.com/)
-- [Node.js](https://nodejs.org/en) (v18+)
-- [npm](https://www.npmjs.com/)
-
-### Installation
-
-```bash
-git clone https://github.com/Srivarun-04/ai_resume_optimizer.git
-cd ai-resume-analyzer
-npm install
-```
-
-### Development
-
-Start the development server:
-
-```bash
-npm run dev
-```
-
-Open [http://localhost:5173](http://localhost:5173) in your browser.
-
-### Production Build
-
-```bash
-npm run build
-```
-
-### Type Checking
-
-```bash
-npm run typecheck
-```
-
-## 🔄 How It Works
-
-1. **Sign In** — Authenticate via Puter.js (browser-based, no backend needed).
-2. **Upload Resume** — Select a PDF resume and optionally provide a job title & description.
-3. **AI Analysis** — The resume is sent to Claude AI via Puter's AI SDK with a detailed prompt.
-4. **View Dashboard** — Results are displayed in a compact dashboard:
-   - **Score Cards** — ATS, Skills, Content, and Structure scores.
-   - **Strengths & Weaknesses** — Categorized feedback items.
-   - **Suggestions** — Detailed improvement recommendations.
-   - **Extracted Skills** — Technical skills identified from the resume.
-   - **Recommended Roles** — Top 3 job roles with confidence percentages.
-5. **History** — All analyzed resumes are stored and accessible from the homepage.
-
-## 📋 API / AI Response Schema
-
-The AI returns a structured JSON object with the following shape:
-
-```typescript
-interface Feedback {
-  overallScore: number;
-  ATS: { score: number; tips: { type: "good" | "improve"; tip: string }[] };
-  toneAndStyle: { score: number; tips: { type: "good" | "improve"; tip: string; explanation: string }[] };
-  content: { score: number; tips: { ... }[] };
-  structure: { score: number; tips: { ... }[] };
-  skills: { score: number; tips: { ... }[] };
-  extractedSkills: string[];
-  recommendedRoles: { role: string; confidence: number; reason: string }[];
-}
-```
-
-## ⚠️ Known Limitations
-
-- Only the first page of multi-page PDFs is previewed as an image.
-- AI responses may occasionally be wrapped in markdown code blocks — the parser handles this automatically.
-- Puter.js requires an active internet connection for all operations.
-- Historical resumes with empty feedback (from before the fix) require a data wipe at `/wipe`.
-
-## 🚀 Future Enhancements
-
-- 📈 Skill gap analysis comparing resume skills against job requirements
-- 📊 Side-by-side resume comparison
-- 📝 AI-powered resume rewriting suggestions
-- 🔄 Multi-page PDF support
-- 📤 Export analysis as PDF report
+- **📄 Resume Upload & PDF Preview:** Seamlessly upload and instantly preview your resume in a clean, modern interface.
+- **🤖 AI Resume Analysis:** Receive deep, AI-driven feedback on your resume's content, structure, and tone.
+- **📊 ATS Score:** Get a comprehensive Applicant Tracking System compatibility score.
+- **💡 Improvement Suggestions:** Actionable, tailored advice to fix weaknesses and highlight strengths.
+- **🎯 Career Path Recommendation:** Discover suitable roles tailored exactly to your extracted skill set.
+- **🧠 Skill Extraction:** Automatically identify and categorize your technical and soft skills.
+- **📈 Skill Gap Analysis:** Compare your current skills against industry requirements for your target role.
+- **🗺️ Personalized Learning Roadmap:** Step-by-step 30, 60, and 90-day upskilling plans.
+- **🎤 AI Interview Preparation:** Practice with dynamic questions based strictly on your resume and target job.
+- **💬 Technical Questions:** Challenge your technical depth.
+- **📚 Resume-Based Questions:** Defend your project decisions and past experiences.
+- **👥 Behavioral Questions:** Practice the STAR method for leadership and teamwork scenarios.
+- **✨ AI Suggested Interview Answers:** Get ideal model answers, key points, and common mistakes to avoid.
 
 ---
 
-Built with ❤️ using React, Puter.js, and Claude AI.
+## 📸 Screenshots
+
+| Home Page | Upload Resume |
+| :---: | :---: |
+| <img src="docs/placeholder-home.png" alt="Home Page Placeholder" width="400"/> | <img src="docs/placeholder-upload.png" alt="Upload Placeholder" width="400"/> |
+
+| Resume Analysis | Career Analysis |
+| :---: | :---: |
+| <img src="docs/placeholder-analysis.png" alt="Analysis Placeholder" width="400"/> | <img src="docs/placeholder-career.png" alt="Career Placeholder" width="400"/> |
+
+| Learning Roadmap | Interview Preparation |
+| :---: | :---: |
+| <img src="docs/placeholder-roadmap.png" alt="Roadmap Placeholder" width="400"/> | <img src="docs/placeholder-interview.png" alt="Interview Placeholder" width="400"/> |
+
+*(Note: Replace `docs/placeholder-*.png` paths with actual screenshots)*
+
+---
+
+## 🏗️ System Architecture
+
+```mermaid
+graph TD
+    A[User] -->|Uploads PDF| B(Upload Resume)
+    B --> C[PDF Processing & Image Conversion]
+    C --> D[AI Resume Analysis]
+    D --> E{ATS Score & Feedback}
+    E --> F[Career Analysis]
+    E --> G[Skill Gap Detection]
+    F --> H[Learning Roadmap]
+    G --> H
+    H --> I[Interview Preparation]
+    I --> J[AI Suggested Answers]
+```
+
+---
+
+## 💻 Tech Stack
+
+| Category | Technologies |
+| --- | --- |
+| **Frontend** | React, TypeScript, Tailwind CSS, React Router, Vite |
+| **AI Services** | Puter AI |
+| **Tools & Misc** | PDF.js, Git, GitHub |
+
+---
+
+## 🚀 Installation
+
+Follow these steps to run ResumeIQ locally:
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/Srivarun-04/ResumeIQ.git
+   cd ResumeIQ
+   ```
+
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+
+3. **Start the development server:**
+   ```bash
+   npm run dev
+   ```
+
+---
+
+## 📂 Folder Structure
+
+```text
+ResumeIQ/
+├── app/
+│   ├── components/      # Reusable UI components
+│   ├── routes/          # Application pages & routing logic
+│   ├── lib/             # Utility functions and store setup
+│   ├── root.tsx         # Root component
+│   └── app.css          # Global Tailwind styles
+├── constants/           # Application constants & AI prompts
+├── public/              # Static assets (images, icons)
+├── package.json
+└── README.md
+```
+
+---
+
+## 🔮 Future Enhancements
+
+- **📝 Cover Letter Generator:** Automatically draft cover letters tailored to specific job descriptions.
+- **🔄 Resume Version Comparison:** A/B test different resume formats and contents.
+- **📥 Resume Export:** Download beautifully formatted, ATS-optimized PDFs.
+- **🏢 Company-Specific Interview Prep:** Tailor interview questions for FAANG and other top tech companies.
+- **🌍 Multi-Language Support:** Analyze and generate feedback for resumes in different languages.
+- **🔐 User Authentication:** Secure user accounts to save and track multiple applications.
+- **📊 Dashboard Analytics:** Track application success rates and skill progression over time.
+
+---
+
+## 👨‍💻 Author
+
+Developed by **Srivarun Manthena**
+
+- **GitHub:** [Srivarun-04](https://github.com/Srivarun-04)
+- **LinkedIn:** [Your LinkedIn Profile](#) <!-- Replace with actual link -->
+- **Portfolio:** [Your Portfolio Website](#) <!-- Replace with actual link -->
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.

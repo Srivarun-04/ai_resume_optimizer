@@ -250,37 +250,10 @@ const Upload = () => {
                             {/* Step-spacing line */}
                             <div className="border-b border-gray-100" />
 
-                            {/* Step 5: Resume Preview */}
-                            <div className="form-div">
-                                <label className="text-xs font-bold text-gray-800 mb-2 flex items-center gap-2">
-                                    <span className="flex items-center justify-center w-5 h-5 rounded-full bg-indigo-50 text-indigo-600 text-[10px] font-black border border-indigo-100">5</span>
-                                    Resume Preview
-                                </label>
-                                {pdfUrl ? (
-                                    <div className="w-full rounded-xl border border-gray-200 bg-gray-50 overflow-hidden mt-1 shadow-inner">
-                                        <iframe 
-                                            src={pdfUrl} 
-                                            className="w-full h-[320px] border-none" 
-                                            title="Resume PDF Preview" 
-                                        />
-                                    </div>
-                                ) : (
-                                    <div className="w-full h-28 mt-1 rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center text-gray-400 bg-gray-50/50 p-4 text-center transition">
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8 text-gray-300 mb-1">
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                                        </svg>
-                                        <p className="text-[10px] font-bold text-gray-400">No file uploaded for preview</p>
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Step-spacing line */}
-                            <div className="border-b border-gray-100" />
-
-                            {/* Step 6: Analyze Resume */}
+                            {/* Step 5: Analyze Resume */}
                             <div className="w-full pt-2 flex flex-col items-center gap-2">
                                 <label className="text-xs font-bold text-gray-800 self-start mb-2.5 flex items-center gap-2">
-                                    <span className="flex items-center justify-center w-5 h-5 rounded-full bg-indigo-50 text-indigo-600 text-[10px] font-black border border-indigo-100">6</span>
+                                    <span className="flex items-center justify-center w-5 h-5 rounded-full bg-indigo-50 text-indigo-600 text-[10px] font-black border border-indigo-100">5</span>
                                     Analyze Resume
                                 </label>
                                 <button className="primary-button py-3 cursor-pointer w-full text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2" type="submit">

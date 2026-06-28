@@ -193,6 +193,15 @@ export const usePuterStore = create<PuterStore>((set, get) => {
 
         try {
             await puter.auth.signOut();
+            
+            // Clear any lingering cached sessions to ensure old accounts aren't reused
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.toLowerCase().includes('puter')) {
+                    localStorage.removeItem(key);
+                }
+            }
+
             set({
                 auth: {
                     user: null,
