@@ -35,17 +35,15 @@
 
 | Home Page | Upload Resume |
 | :---: | :---: |
-| <img src="docs/placeholder-home.png" alt="Home Page Placeholder" width="400"/> | <img src="docs/placeholder-upload.png" alt="Upload Placeholder" width="400"/> |
+| <img src="public/screenshots/Home_page.png" alt="Home Page" width="400"/> | <img src="public/screenshots/Upload.png" alt="Upload Resume" width="400"/> |
 
 | Resume Analysis | Career Analysis |
 | :---: | :---: |
-| <img src="docs/placeholder-analysis.png" alt="Analysis Placeholder" width="400"/> | <img src="docs/placeholder-career.png" alt="Career Placeholder" width="400"/> |
+| <img src="public/screenshots/Resume_analysis.png" alt="Resume Analysis" width="400"/> | <img src="public/screenshots/Career_analysis.png" alt="Career Analysis" width="400"/> |
 
-| Learning Roadmap | Interview Preparation |
-| :---: | :---: |
-| <img src="docs/placeholder-roadmap.png" alt="Roadmap Placeholder" width="400"/> | <img src="docs/placeholder-interview.png" alt="Interview Placeholder" width="400"/> |
-
-*(Note: Replace `docs/placeholder-*.png` paths with actual screenshots)*
+| Interview Preparation |
+| :---: |
+| <img src="public/screenshots/Interview_analysis.png" alt="Interview Preparation" width="400"/> |
 
 ---
 
