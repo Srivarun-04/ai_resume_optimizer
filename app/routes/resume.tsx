@@ -181,6 +181,23 @@ const Resume = () => {
                             </Link>
                         </div>
 
+                        {/* ── Interview Preparation Action Card ── */}
+                        <div className="dash-card bg-gradient-to-r from-teal-50 to-cyan-50 border border-teal-100 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                            <div className="flex items-start gap-3">
+                                <span className="text-2xl mt-0.5">🎯</span>
+                                <div>
+                                    <h3 className="text-sm font-bold text-teal-900">Interview Preparation</h3>
+                                    <p className="text-xs text-teal-700 mt-1 max-w-2xl leading-relaxed">
+                                        Get AI-generated interview questions tailored to your resume, skills, and target role.
+                                        Practice technical, behavioral, and resume-based questions before your interview.
+                                    </p>
+                                </div>
+                            </div>
+                            <Link to={`/interview-preparation/${id}`} className="inline-flex items-center gap-1.5 bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 text-white font-semibold text-xs px-4.5 py-2.5 rounded-lg shadow-sm hover:shadow transition-all duration-200 shrink-0">
+                                Interview Preparation <span className="text-[14px]">→</span>
+                            </Link>
+                        </div>
+
                         {/* ── Middle Row: Strengths + Weaknesses ── */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                             {/* Strengths */}

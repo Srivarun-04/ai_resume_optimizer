@@ -56,4 +56,34 @@ interface Feedback {
     };
 }
 
+interface InterviewQuestion {
+    question: string;
+    difficulty: "Easy" | "Medium" | "Hard";
+    expectedTopics: string[];
+}
 
+interface ResumeQuestion {
+    projectName: string;
+    questions: string[];
+}
+
+interface CodingTopic {
+    topic: string;
+    importance: "High" | "Medium" | "Low";
+    reason: string;
+}
+
+interface InterviewReadiness {
+    technical: number;
+    resume: number;
+    communication: number;
+    overall: number;
+}
+
+interface InterviewPrepData {
+    technicalQuestions: InterviewQuestion[];
+    resumeBasedQuestions: ResumeQuestion[];
+    behavioralQuestions: string[];
+    codingTopics: CodingTopic[];
+    readinessScores: InterviewReadiness;
+}

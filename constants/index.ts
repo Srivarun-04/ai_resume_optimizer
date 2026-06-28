@@ -169,3 +169,78 @@ export const prepareInstructions = ({jobTitle, jobDescription}: { jobTitle: stri
       ${AIResponseFormat}
       
       Return ONLY the raw JSON object, without markdown code block syntax (like \`\`\`json), and do not output any other introduction, remarks, or conversational text.`;
+
+export const InterviewPrepResponseFormat = `
+      interface InterviewPrepData {
+        technicalQuestions: {
+          question: string;       // A specific technical question relevant to the candidate's skills and target role
+          difficulty: "Easy" | "Medium" | "Hard";  // Difficulty level
+          expectedTopics: string[];  // 2-4 key topics/concepts the answer should cover
+        }[];  // Generate exactly 10 technical questions
+
+        resumeBasedQuestions: {
+          projectName: string;     // Name of the project from the resume
+          questions: string[];     // 2-3 deep-dive questions about this specific project
+        }[];  // Generate questions for 3-4 projects
+
+        behavioralQuestions: string[];  // Generate exactly 8 behavioral interview questions
+
+        codingTopics: {
+          topic: string;           // e.g. "Arrays", "Hash Maps", "Trees"
+          importance: "High" | "Medium" | "Low";  // Relevance to the target job
+          reason: string;          // Brief explanation of why this topic matters for the role
+        }[];  // Generate 8-10 coding/DSA topics
+
+        readinessScores: {
+          technical: number;       // 0-100 based on skills match and depth
+          resume: number;          // 0-100 based on resume quality and project depth
+          communication: number;   // 0-100 based on resume writing quality and clarity
+          overall: number;         // 0-100 weighted average
+        };
+      }
+`;
+
+export const prepareInterviewInstructions = ({
+    jobTitle,
+    jobDescription,
+    extractedSkills,
+    matchingSkills,
+    missingSkills,
+    recommendedRoles,
+    strengths,
+    weaknesses,
+}: {
+    jobTitle: string;
+    jobDescription: string;
+    extractedSkills: string[];
+    matchingSkills: string[];
+    missingSkills: string[];
+    recommendedRoles: string[];
+    strengths: string[];
+    weaknesses: string[];
+}) =>
+    `You are an expert technical interviewer, career coach, and coding interview strategist.
+      Based on the following candidate profile, generate a comprehensive and PERSONALIZED interview preparation package.
+
+      CANDIDATE PROFILE:
+      - Target Job Title: ${jobTitle}
+      - Job Description: ${jobDescription}
+      - Skills on Resume: ${extractedSkills.join(", ")}
+      - Skills Matching Job: ${matchingSkills.join(", ")}
+      - Skills Missing for Job: ${missingSkills.join(", ")}
+      - Recommended Career Roles: ${recommendedRoles.join(", ")}
+      - Resume Strengths: ${strengths.join("; ")}
+      - Resume Weaknesses: ${weaknesses.join("; ")}
+
+      CRITICAL RULES:
+      1. Technical Questions MUST be specific to the candidate's actual skills (${extractedSkills.slice(0, 5).join(", ")}). Do NOT generate generic questions.
+      2. Resume-Based Questions MUST reference real projects/achievements that would appear on a resume with these skills. Create plausible project names based on the skills.
+      3. Behavioral Questions MUST be tailored to the target role (${jobTitle}) and industry context.
+      4. Coding Topics MUST be ranked by importance for the specific job (${jobTitle}), not generic DSA lists.
+      5. Readiness Scores MUST reflect the actual gap between candidate skills and job requirements.
+      6. Different skill sets MUST produce different interview packages — no two candidates should get the same output.
+
+      Provide the response exactly matching the following JSON schema:
+      ${InterviewPrepResponseFormat}
+
+      Return ONLY the raw JSON object, without markdown code block syntax (like \`\`\`json), and do not output any other introduction, remarks, or conversational text.`;
