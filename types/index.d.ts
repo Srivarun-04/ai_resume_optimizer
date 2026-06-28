@@ -64,7 +64,20 @@ interface InterviewQuestion {
 
 interface ResumeQuestion {
     projectName: string;
+    technologies: string[];
     questions: string[];
+}
+
+interface StarCoaching {
+    situation: string;
+    task: string;
+    action: string;
+    result: string;
+}
+
+interface BehavioralQuestion {
+    question: string;
+    starCoaching: StarCoaching;
 }
 
 interface CodingTopic {
@@ -80,10 +93,25 @@ interface InterviewReadiness {
     overall: number;
 }
 
+interface InterviewSummary {
+    estimatedDuration: string;
+    topSkillsEvaluated: string[];
+}
+
 interface InterviewPrepData {
+    version?: number;
     technicalQuestions: InterviewQuestion[];
     resumeBasedQuestions: ResumeQuestion[];
-    behavioralQuestions: string[];
+    behavioralQuestions: BehavioralQuestion[];
     codingTopics: CodingTopic[];
     readinessScores: InterviewReadiness;
+    interviewSummary: InterviewSummary;
+    coachingNotes: string[];
+}
+
+interface AIAnswer {
+    idealAnswer: string;
+    keyPoints: string[];
+    commonMistakes: string[];
+    followUpQuestions: string[];
 }

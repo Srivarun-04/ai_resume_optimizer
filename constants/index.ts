@@ -170,6 +170,8 @@ export const prepareInstructions = ({jobTitle, jobDescription}: { jobTitle: stri
       
       Return ONLY the raw JSON object, without markdown code block syntax (like \`\`\`json), and do not output any other introduction, remarks, or conversational text.`;
 
+export const INTERVIEW_PREP_VERSION = 2;
+
 export const InterviewPrepResponseFormat = `
       interface InterviewPrepData {
         technicalQuestions: {
@@ -180,10 +182,19 @@ export const InterviewPrepResponseFormat = `
 
         resumeBasedQuestions: {
           projectName: string;     // Name of the project from the resume
-          questions: string[];     // 2-3 deep-dive questions about this specific project
+          technologies: string[];  // 2-5 technologies used in this project
+          questions: string[];     // 4-5 deep-dive questions about this specific project (architecture, tech choices, scaling, challenges, improvements)
         }[];  // Generate questions for 3-4 projects
 
-        behavioralQuestions: string[];  // Generate exactly 8 behavioral interview questions
+        behavioralQuestions: {
+          question: string;        // The behavioral interview question
+          starCoaching: {
+            situation: string;     // 1-2 sentence guidance on what situation context the interviewer expects
+            task: string;          // 1-2 sentence guidance on what responsibility/task to highlight
+            action: string;       // 1-2 sentence guidance on how to structure the technical actions taken
+            result: string;        // 1-2 sentence guidance on how to quantify impact and present measurable results
+          };
+        }[];  // Generate exactly 8 behavioral questions with STAR coaching
 
         codingTopics: {
           topic: string;           // e.g. "Arrays", "Hash Maps", "Trees"
@@ -191,12 +202,12 @@ export const InterviewPrepResponseFormat = `
           reason: string;          // Brief explanation of why this topic matters for the role
         }[];  // Generate 8-10 coding/DSA topics
 
-        readinessScores: {
-          technical: number;       // 0-100 based on skills match and depth
-          resume: number;          // 0-100 based on resume quality and project depth
-          communication: number;   // 0-100 based on resume writing quality and clarity
-          overall: number;         // 0-100 weighted average
+        interviewSummary: {
+          estimatedDuration: string;    // e.g. "45-60 minutes"
+          topSkillsEvaluated: string[]; // Top 3 skills being evaluated in this interview
         };
+
+        coachingNotes: string[];  // Generate 5-7 personalized coaching tips based on resume gaps, project strengths, missing skills, and target role. Each tip should be a specific actionable sentence like "Focus on explaining your Real-Time Chat Application architecture in detail." or "Review MongoDB indexing concepts before the interview."
       }
 `;
 
@@ -234,13 +245,43 @@ export const prepareInterviewInstructions = ({
 
       CRITICAL RULES:
       1. Technical Questions MUST be specific to the candidate's actual skills (${extractedSkills.slice(0, 5).join(", ")}). Do NOT generate generic questions.
-      2. Resume-Based Questions MUST reference real projects/achievements that would appear on a resume with these skills. Create plausible project names based on the skills.
-      3. Behavioral Questions MUST be tailored to the target role (${jobTitle}) and industry context.
+      2. Resume-Based Questions MUST reference real projects/achievements. For each project, create a plausible project name based on the skills, include the technologies used, and generate 4-5 deep-dive questions covering: architecture decisions, specific technology choices (e.g. "Why did you choose Socket.io over raw WebSockets?"), authentication/data flow, scalability improvements, and challenges faced.
+      3. Behavioral Questions MUST be tailored to the target role (${jobTitle}). For each question, provide STAR framework coaching guidance — do NOT write full answers, only guide the user on what to focus on in each STAR component (Situation, Task, Action, Result).
       4. Coding Topics MUST be ranked by importance for the specific job (${jobTitle}), not generic DSA lists.
-      5. Readiness Scores MUST reflect the actual gap between candidate skills and job requirements.
+      5. Coaching Notes MUST be personalized and actionable — reference specific skills, projects, and gaps from the candidate's profile. Include tips about missing skills (${missingSkills.join(", ")}) and how to prepare for questions about specific technologies.
       6. Different skill sets MUST produce different interview packages — no two candidates should get the same output.
+      7. interviewSummary.topSkillsEvaluated MUST list the top 3 most critical skills being evaluated based on the job description and candidate profile.
 
       Provide the response exactly matching the following JSON schema:
       ${InterviewPrepResponseFormat}
 
       Return ONLY the raw JSON object, without markdown code block syntax (like \`\`\`json), and do not output any other introduction, remarks, or conversational text.`;
+
+export const generateAIAnswerPrompt = ({
+    question,
+    jobTitle,
+    extractedSkills,
+    projectContext,
+}: {
+    question: string;
+    jobTitle: string;
+    extractedSkills: string[];
+    projectContext: string;
+}) =>
+    `You are an expert interview coach helping a candidate prepare for a ${jobTitle} position.
+
+The candidate has skills in: ${extractedSkills.join(", ")}
+${projectContext ? `Relevant project context: ${projectContext}` : ""}
+
+Generate a model interview answer for this question:
+"${question}"
+
+Respond in this exact JSON format:
+{
+  "idealAnswer": "A detailed, well-structured ideal answer (3-5 sentences) that is specific to the candidate's skills and experience. Not generic.",
+  "keyPoints": ["Point 1 the interviewer expects", "Point 2", "Point 3"],
+  "commonMistakes": ["Mistake 1 to avoid", "Mistake 2 to avoid", "Mistake 3 to avoid"],
+  "followUpQuestions": ["Likely follow-up question 1", "Likely follow-up question 2"]
+}
+
+Return ONLY the raw JSON object, without markdown code block syntax.`;

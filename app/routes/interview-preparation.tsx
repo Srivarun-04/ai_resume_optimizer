@@ -1,8 +1,8 @@
 import { Link, useParams, useNavigate } from "react-router";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { usePuterStore } from "~/lib/puter";
 import { cn, normalizeFeedback } from "~/lib/utils";
-import { prepareInterviewInstructions } from "../../constants";
+import { prepareInterviewInstructions, generateAIAnswerPrompt, INTERVIEW_PREP_VERSION, AI_MODEL } from "../../constants";
 
 export const meta = () => ([
     { title: "Resumind | Interview Preparation" },
@@ -66,6 +66,139 @@ const ProgressBar = ({ label, value, color }: { label: string; value: number; co
     );
 };
 
+/* ── Summary Stat Card ─────────────────────────────────────── */
+
+const SummaryCard = ({ icon, label, value, accent }: { icon: string; label: string; value: string | number; accent: string }) => (
+    <div className={cn("flex items-center gap-3 bg-white border rounded-xl p-3 shadow-sm hover:shadow-md transition-all duration-200", accent)}>
+        <span className="text-lg">{icon}</span>
+        <div className="flex-1 min-w-0">
+            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">{label}</p>
+            <p className="text-sm font-bold text-gray-900 truncate">{value}</p>
+        </div>
+    </div>
+);
+
+/* ── AI Answer Display Component ──────────────────────────── */
+
+const AIAnswerPanel = ({ answer }: { answer: AIAnswer }) => (
+    <div className="mt-3 space-y-3 animate-in fade-in duration-300">
+        {/* Ideal Answer */}
+        <div className="bg-emerald-50/60 border border-emerald-200 rounded-lg p-3">
+            <span className="text-[9px] font-bold text-emerald-600 uppercase tracking-wider flex items-center gap-1 mb-1.5">
+                ✅ Ideal Answer
+            </span>
+            <p className="text-[11px] text-emerald-900 leading-relaxed">{answer.idealAnswer}</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+            {/* Key Points */}
+            <div className="bg-blue-50/60 border border-blue-200 rounded-lg p-3">
+                <span className="text-[9px] font-bold text-blue-600 uppercase tracking-wider flex items-center gap-1 mb-1.5">
+                    🎯 Key Points
+                </span>
+                <ul className="space-y-1">
+                    {answer.keyPoints.map((p, i) => (
+                        <li key={i} className="text-[10px] text-blue-800 flex items-start gap-1.5">
+                            <span className="text-blue-400 mt-0.5 shrink-0">•</span>
+                            <span>{p}</span>
+                        </li>
+                    ))}
+                </ul>
+            </div>
+
+            {/* Common Mistakes */}
+            <div className="bg-rose-50/60 border border-rose-200 rounded-lg p-3">
+                <span className="text-[9px] font-bold text-rose-600 uppercase tracking-wider flex items-center gap-1 mb-1.5">
+                    ⚠️ Common Mistakes
+                </span>
+                <ul className="space-y-1">
+                    {answer.commonMistakes.map((m, i) => (
+                        <li key={i} className="text-[10px] text-rose-800 flex items-start gap-1.5">
+                            <span className="text-rose-400 mt-0.5 shrink-0">✗</span>
+                            <span>{m}</span>
+                        </li>
+                    ))}
+                </ul>
+            </div>
+
+            {/* Follow-up Questions */}
+            <div className="bg-amber-50/60 border border-amber-200 rounded-lg p-3">
+                <span className="text-[9px] font-bold text-amber-600 uppercase tracking-wider flex items-center gap-1 mb-1.5">
+                    🔄 Follow-up Questions
+                </span>
+                <ul className="space-y-1">
+                    {answer.followUpQuestions.map((q, i) => (
+                        <li key={i} className="text-[10px] text-amber-800 flex items-start gap-1.5">
+                            <span className="text-amber-400 mt-0.5 shrink-0">→</span>
+                            <span>{q}</span>
+                        </li>
+                    ))}
+                </ul>
+            </div>
+        </div>
+    </div>
+);
+
+/* ── STAR Coaching Component ──────────────────────────────── */
+
+const STARCoachingPanel = ({ coaching }: { coaching: StarCoaching }) => {
+    const starItems = [
+        { key: "situation", label: "Situation", icon: "📍", color: "border-blue-200 bg-blue-50/50", textColor: "text-blue-700", labelColor: "text-blue-600", tip: coaching.situation },
+        { key: "task", label: "Task", icon: "🎯", color: "border-violet-200 bg-violet-50/50", textColor: "text-violet-700", labelColor: "text-violet-600", tip: coaching.task },
+        { key: "action", label: "Action", icon: "⚙️", color: "border-teal-200 bg-teal-50/50", textColor: "text-teal-700", labelColor: "text-teal-600", tip: coaching.action },
+        { key: "result", label: "Result", icon: "📊", color: "border-amber-200 bg-amber-50/50", textColor: "text-amber-700", labelColor: "text-amber-600", tip: coaching.result },
+    ];
+
+    return (
+        <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {starItems.map((item) => (
+                <div key={item.key} className={cn("border rounded-lg p-2.5", item.color)}>
+                    <div className="flex items-center gap-1.5 mb-1">
+                        <span className="text-xs">{item.icon}</span>
+                        <span className={cn("text-[10px] font-bold uppercase tracking-wider", item.labelColor)}>{item.label}</span>
+                    </div>
+                    <p className={cn("text-[10px] leading-relaxed", item.textColor)}>{item.tip}</p>
+                </div>
+            ))}
+        </div>
+    );
+};
+
+/* ── Compute dynamic readiness from stored analysis ───────── */
+
+const computeReadiness = (normalized: Feedback | null): InterviewReadiness => {
+    if (!normalized) return { technical: 50, resume: 50, communication: 50, overall: 50 };
+
+    const { atsScore, careerAnalysis, strengths, weaknesses } = normalized;
+    const matchCount = careerAnalysis?.matchingSkills?.length || 0;
+    const missCount = careerAnalysis?.missingSkills?.length || 0;
+    const totalSkills = matchCount + missCount;
+
+    // Technical Readiness: skill match ratio weighted with ATS skills score
+    const skillRatio = totalSkills > 0 ? matchCount / totalSkills : 0.5;
+    let technical = Math.round(skillRatio * 60 + (atsScore?.skills || 50) * 0.4);
+    technical = Math.max(25, Math.min(95, technical));
+
+    // Resume Readiness: ATS content + structure + strengths vs weaknesses balance
+    const strengthCount = strengths?.length || 0;
+    const weaknessCount = weaknesses?.length || 0;
+    const balanceBonus = Math.min(10, (strengthCount - weaknessCount) * 3);
+    let resume = Math.round(((atsScore?.content || 50) * 0.4 + (atsScore?.structure || 50) * 0.3 + (atsScore?.ats || 50) * 0.3) + balanceBonus);
+    resume = Math.max(25, Math.min(95, resume));
+
+    // Communication Readiness: Tone & style + content quality
+    let communication = Math.round((atsScore?.toneAndStyle || 50) * 0.6 + (atsScore?.content || 50) * 0.4);
+    communication = Math.max(25, Math.min(95, communication));
+
+    // Overall: Weighted average, anchored to ATS overall (never more than +8 above it)
+    const rawOverall = Math.round(technical * 0.4 + resume * 0.3 + communication * 0.3);
+    const atsOverall = atsScore?.overallScore || 50;
+    let overall = Math.min(rawOverall, atsOverall + 8);
+    overall = Math.max(25, Math.min(95, overall));
+
+    return { technical, resume, communication, overall };
+};
+
 /* ── Fallback data generator (if AI fails) ────────────────── */
 
 const generateFallbackData = (skills: string[], jobTitle: string): InterviewPrepData => {
@@ -83,22 +216,117 @@ const generateFallbackData = (skills: string[], jobTitle: string): InterviewPrep
         });
     }
 
+    // Build project-specific resume questions from skills
+    const projectSkillGroups = [
+        { name: "Full Stack Web Application", techs: skills.filter(s => ["React", "Node.js", "Express.js", "MongoDB", "MySQL"].includes(s)).slice(0, 4) },
+        { name: "API Integration Project", techs: skills.filter(s => ["REST APIs", "JavaScript", "Git", "Authentication & Authorization"].includes(s)).slice(0, 3) },
+        { name: "Data Processing Pipeline", techs: skills.filter(s => ["Python", "Java", "SQL", "Data Structures & Algorithms"].includes(s)).slice(0, 3) },
+    ].filter(g => g.techs.length > 0);
+
+    const resumeBasedQuestions: ResumeQuestion[] = projectSkillGroups.length > 0
+        ? projectSkillGroups.map(g => ({
+            projectName: g.name,
+            technologies: g.techs.length > 0 ? g.techs : skills.slice(0, 3),
+            questions: [
+                `Walk me through the architecture of your ${g.name}.`,
+                `What were the biggest technical challenges you faced in this project?`,
+                `Why did you choose ${g.techs[0] || "this technology"} for this project?`,
+                `How would you improve the scalability of this project today?`,
+                `What testing strategy did you use?`,
+            ],
+        }))
+        : [{
+            projectName: "Your Featured Project",
+            technologies: skills.slice(0, 3),
+            questions: [
+                "Walk me through the architecture of this project.",
+                "What were the biggest technical challenges you faced?",
+                "How would you improve it today?",
+                "What was your specific technical contribution?",
+                "How did you handle deployment and monitoring?",
+            ],
+        }];
+
+    const behavioralQuestions: BehavioralQuestion[] = [
+        {
+            question: "Tell me about yourself and your journey into tech.",
+            starCoaching: {
+                situation: "Set the scene with your background — what sparked your interest in technology and what path led you here.",
+                task: "Highlight the key decision points or goals that directed your career toward this specific role.",
+                action: "Describe the concrete steps you took: courses, projects, internships, or self-learning that built your skills.",
+                result: "Summarize where you are now and connect it to why you're a strong fit for this role.",
+            },
+        },
+        {
+            question: "Describe a difficult bug you solved and your approach.",
+            starCoaching: {
+                situation: "Describe the production environment or project context where the bug appeared and its impact.",
+                task: "Clarify what was broken and why it was urgent — mention user impact or business criticity.",
+                action: "Walk through your debugging methodology: logs, reproduction steps, root cause analysis, fix implementation.",
+                result: "Quantify the outcome — uptime restored, users unblocked, prevention measures added.",
+            },
+        },
+        {
+            question: "Describe a project you are most proud of and why.",
+            starCoaching: {
+                situation: "Set context about the project scope, team size, and timeline.",
+                task: "Explain your specific role and the key challenge you were responsible for solving.",
+                action: "Detail the technical decisions you made and the implementation approach.",
+                result: "Share measurable outcomes: users served, performance improvements, or business metrics impacted.",
+            },
+        },
+        {
+            question: "How do you handle tight deadlines and competing priorities?",
+            starCoaching: {
+                situation: "Describe a real scenario with multiple urgent tasks or a tight deadline.",
+                task: "Explain what was at stake and why prioritization was critical.",
+                action: "Show your prioritization framework: urgency vs importance, communication with stakeholders, breaking work into deliverables.",
+                result: "Highlight that you met the deadline and how your approach prevented similar issues in the future.",
+            },
+        },
+        {
+            question: `Why do you want to work as a ${jobTitle}?`,
+            starCoaching: {
+                situation: "Connect your career journey to this specific role — what experiences led you here.",
+                task: "Explain the specific challenges of this role that excite you and align with your skills.",
+                action: "Reference specific projects or skills that demonstrate your readiness for this position.",
+                result: "Articulate the long-term value you'll bring and how this role fits your growth trajectory.",
+            },
+        },
+        {
+            question: "Tell me about a time you disagreed with a teammate.",
+            starCoaching: {
+                situation: "Describe the context of the disagreement — was it about architecture, approach, or priorities?",
+                task: "Clarify your position and why you believed your approach was better.",
+                action: "Explain how you communicated your perspective, listened to the other side, and reached resolution.",
+                result: "Highlight the outcome: better solution, maintained relationship, or team process improvement.",
+            },
+        },
+        {
+            question: "How do you stay current with new technologies?",
+            starCoaching: {
+                situation: "Describe your learning ecosystem — blogs, courses, open source, communities you follow.",
+                task: "Explain why staying current matters for your role and how you decide what to learn.",
+                action: "Give specific examples of recent technologies you learned and how you applied them.",
+                result: "Show the impact — a side project, a work improvement, or a skill that landed you an opportunity.",
+            },
+        },
+        {
+            question: "Describe a time you had to learn something quickly.",
+            starCoaching: {
+                situation: "Set the scene: what technology or concept did you need to learn and what was the time pressure?",
+                task: "Explain why rapid learning was critical — project deadline, production issue, or team need.",
+                action: "Describe your learning strategy: documentation, tutorials, pair programming, prototyping.",
+                result: "Quantify how quickly you became productive and the quality of your contribution.",
+            },
+        },
+    ];
+
     return {
+        version: INTERVIEW_PREP_VERSION,
         technicalQuestions,
-        resumeBasedQuestions: [
-            { projectName: "Your Featured Project", questions: ["Walk me through the architecture of this project.", "What were the biggest technical challenges you faced?", "How would you improve it today?"] },
-            { projectName: "Team Collaboration Project", questions: ["How did you divide responsibilities?", "What was your specific contribution?"] },
-        ],
-        behavioralQuestions: [
-            "Tell me about yourself and your journey into tech.",
-            "Describe a difficult bug you solved and your approach.",
-            "Describe a project you are most proud of and why.",
-            "How do you handle tight deadlines and competing priorities?",
-            `Why do you want to work as a ${jobTitle}?`,
-            "Tell me about a time you disagreed with a teammate.",
-            "How do you stay current with new technologies?",
-            "Describe a time you had to learn something quickly.",
-        ],
+        resumeBasedQuestions,
+        behavioralQuestions,
         codingTopics: [
             { topic: "Arrays & Strings", importance: "High", reason: "Foundation for most coding interviews" },
             { topic: "Hash Maps", importance: "High", reason: "Key for optimization problems" },
@@ -107,12 +335,20 @@ const generateFallbackData = (skills: string[], jobTitle: string): InterviewPrep
             { topic: "Dynamic Programming", importance: "Medium", reason: "Advanced problem solving" },
             { topic: "Stacks & Queues", importance: "Low", reason: "Basic data structure proficiency" },
         ],
-        readinessScores: {
-            technical: Math.min(95, 50 + skills.length * 3),
-            resume: 70,
-            communication: 65,
-            overall: Math.min(90, 55 + skills.length * 2),
+        readinessScores: { technical: 50, resume: 50, communication: 50, overall: 50 },
+        interviewSummary: {
+            estimatedDuration: "45-60 minutes",
+            topSkillsEvaluated: skills.slice(0, 3),
         },
+        coachingNotes: [
+            `Focus on explaining your projects in detail using ${skills[0] || "your primary technology"}.`,
+            `Prepare to answer backend API and system design questions for the ${jobTitle} role.`,
+            `Review core ${skills.slice(0, 3).join(", ")} concepts before the interview.`,
+            "Practice behavioral questions using the STAR framework — prepare 3-4 concrete stories.",
+            skills.length > 5
+                ? `Strengthen knowledge of ${skills.slice(3, 5).join(" and ")} for deeper technical discussions.`
+                : "Build side projects that demonstrate end-to-end ownership to strengthen your profile.",
+        ],
     };
 };
 
@@ -128,6 +364,14 @@ export default function InterviewPreparation() {
     const [resumeData, setResumeData] = useState<any>(null);
     const [interviewData, setInterviewData] = useState<InterviewPrepData | null>(null);
     const [expandedQuestions, setExpandedQuestions] = useState<Record<string, boolean>>({});
+
+    // AI Answer states
+    const [aiAnswers, setAiAnswers] = useState<Record<string, AIAnswer>>({});
+    const [aiErrors, setAiErrors] = useState<Record<string, string>>({});
+    const [loadingAnswer, setLoadingAnswer] = useState<string | null>(null);
+
+    // Expanded STAR coaching
+    const [expandedStar, setExpandedStar] = useState<Record<string, boolean>>({});
 
     useEffect(() => {
         if (!isLoading && !auth.isAuthenticated) {
@@ -168,13 +412,13 @@ export default function InterviewPreparation() {
                 const strengths = normalized.strengths?.map(s => s.tip) || [];
                 const weaknesses = normalized.weaknesses?.map(w => w.tip) || [];
 
-                // Step 3: Check cache first
+                // Step 3: Check cache first (with version check)
                 const cacheKey = `interview-prep:${resumeId}`;
                 const cached = await kv.get(cacheKey);
                 if (cached) {
                     try {
                         const parsedCache = JSON.parse(cached);
-                        if (parsedCache && parsedCache.technicalQuestions) {
+                        if (parsedCache && parsedCache.technicalQuestions && parsedCache.version === INTERVIEW_PREP_VERSION) {
                             setInterviewData(parsedCache);
                             setLoadingState("complete");
                             return;
@@ -201,7 +445,7 @@ export default function InterviewPreparation() {
                 let aiResult: InterviewPrepData | null = null;
 
                 try {
-                    const response = await ai.chat(prompt, { model: "claude-3-5-sonnet" });
+                    const response = await ai.chat(prompt, { model: AI_MODEL });
                     if (response) {
                         const content = typeof response.message?.content === "string"
                             ? response.message.content
@@ -219,8 +463,47 @@ export default function InterviewPreparation() {
 
                 // Step 5: Use AI result or fallback
                 const finalData = aiResult && aiResult.technicalQuestions
-                    ? aiResult
+                    ? { ...aiResult, version: INTERVIEW_PREP_VERSION }
                     : generateFallbackData(extractedSkills, data.jobTitle || "Software Developer");
+
+                // Ensure all new fields exist even if AI omitted them
+                if (!finalData.interviewSummary) {
+                    finalData.interviewSummary = {
+                        estimatedDuration: "45-60 minutes",
+                        topSkillsEvaluated: extractedSkills.slice(0, 3),
+                    };
+                }
+                if (!finalData.coachingNotes || finalData.coachingNotes.length === 0) {
+                    finalData.coachingNotes = [
+                        `Focus on explaining your projects in detail using ${extractedSkills[0] || "your primary technology"}.`,
+                        `Prepare for backend API questions relevant to the ${data.jobTitle || "target"} role.`,
+                        "Practice behavioral questions using the STAR framework.",
+                    ];
+                }
+
+                // Normalize behavioral questions if AI returned old string[] format
+                if (finalData.behavioralQuestions && finalData.behavioralQuestions.length > 0) {
+                    const first = finalData.behavioralQuestions[0];
+                    if (typeof first === "string") {
+                        finalData.behavioralQuestions = (finalData.behavioralQuestions as unknown as string[]).map(q => ({
+                            question: q,
+                            starCoaching: {
+                                situation: "Describe the specific context and environment where this occurred.",
+                                task: "Explain your specific responsibility and what needed to be accomplished.",
+                                action: "Detail the concrete steps you took and the technical decisions you made.",
+                                result: "Quantify the outcome with metrics, improvements, or measurable impact.",
+                            },
+                        }));
+                    }
+                }
+
+                // Normalize resume questions if AI returned without technologies
+                if (finalData.resumeBasedQuestions && finalData.resumeBasedQuestions.length > 0) {
+                    finalData.resumeBasedQuestions = finalData.resumeBasedQuestions.map(rq => ({
+                        ...rq,
+                        technologies: rq.technologies || extractedSkills.slice(0, 3),
+                    }));
+                }
 
                 // Cache the result
                 await kv.set(cacheKey, JSON.stringify(finalData));
@@ -242,6 +525,10 @@ export default function InterviewPreparation() {
         setExpandedQuestions(prev => ({ ...prev, [key]: !prev[key] }));
     };
 
+    const toggleStar = (key: string) => {
+        setExpandedStar(prev => ({ ...prev, [key]: !prev[key] }));
+    };
+
     const handleRetry = () => {
         // Clear the cache so it regenerates
         if (resumeId) {
@@ -253,9 +540,86 @@ export default function InterviewPreparation() {
         window.location.reload();
     };
 
+    // Generate AI answer for a specific question (lazy, on-demand)
+    const handleShowAIAnswer = useCallback(async (questionKey: string, questionText: string, projectContext?: string) => {
+        if (aiAnswers[questionKey] || loadingAnswer === questionKey) return;
+
+        setLoadingAnswer(questionKey);
+        setAiErrors(prev => {
+            const newErrors = { ...prev };
+            delete newErrors[questionKey];
+            return newErrors;
+        });
+
+        const normalized = resumeData?.feedback
+            ? normalizeFeedback(resumeData.feedback, resumeData.jobTitle, resumeData.jobDescription)
+            : null;
+        const extractedSkills = normalized?.extractedSkills || [];
+
+        try {
+            const prompt = generateAIAnswerPrompt({
+                question: questionText,
+                jobTitle: resumeData?.jobTitle || "Software Developer",
+                extractedSkills,
+                projectContext: projectContext || "",
+            });
+
+            console.log("=== AI Answer Generation Request ===");
+            console.log("Model:", AI_MODEL);
+            console.log("Prompt:", prompt);
+
+            const timeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error("AI generation timed out after 30 seconds")), 30000)
+            );
+
+            // Pass AI_MODEL in options
+            const response = await Promise.race([
+                ai.chat(prompt, { model: AI_MODEL }),
+                timeoutPromise
+            ]) as any;
+
+            console.log("Raw AI Response:", response);
+
+            if (response) {
+                const content = typeof response.message?.content === "string"
+                    ? response.message.content
+                    : response.message?.content?.[0]?.text || "";
+
+                let cleanedText = content.trim();
+                if (cleanedText.startsWith("```")) {
+                    cleanedText = cleanedText.replace(/^```(?:json)?\n?/i, "").replace(/```$/, "").trim();
+                }
+
+                console.log("Cleaned Text:", cleanedText);
+                const parsed = JSON.parse(cleanedText) as AIAnswer;
+                console.log("Parsed Response:", parsed);
+                
+                if (!parsed.idealAnswer || !parsed.keyPoints) {
+                    throw new Error("Parsed response is missing required fields");
+                }
+                
+                setAiAnswers(prev => ({ ...prev, [questionKey]: parsed }));
+            } else {
+                throw new Error("No response from AI");
+            }
+        } catch (e) {
+            console.error("Failed to generate AI answer:", e);
+            const errorMsg = e instanceof Error ? e.message : "An unknown error occurred.";
+            setAiErrors(prev => ({ ...prev, [questionKey]: errorMsg }));
+        } finally {
+            setLoadingAnswer(null);
+        }
+    }, [aiAnswers, loadingAnswer, resumeData, ai]);
+
     const normalized = resumeData?.feedback
         ? normalizeFeedback(resumeData.feedback, resumeData.jobTitle, resumeData.jobDescription)
         : null;
+
+    // Compute dynamic readiness scores from stored analysis
+    const readinessScores = computeReadiness(normalized);
+
+    // Count totals for resume-based questions
+    const totalResumeQuestions = interviewData?.resumeBasedQuestions?.reduce((sum, p) => sum + p.questions.length, 0) || 0;
 
     return (
         <main className="min-h-screen bg-gray-50 pb-12">
@@ -361,6 +725,75 @@ export default function InterviewPreparation() {
                             </div>
                         </div>
 
+                        {/* ═══════════ INTERVIEW SUMMARY DASHBOARD ═══════════ */}
+                        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+                            <div className="flex items-center gap-2 mb-4 border-b border-gray-100 pb-3">
+                                <span className="text-lg">📋</span>
+                                <div>
+                                    <h2 className="text-sm font-bold text-gray-800">Interview Summary</h2>
+                                    <p className="text-[11px] text-gray-400 mt-0.5">Overview of your personalized interview preparation</p>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                <SummaryCard
+                                    icon="💻"
+                                    label="Technical Questions"
+                                    value={interviewData.technicalQuestions.length}
+                                    accent="hover:border-teal-200"
+                                />
+                                <SummaryCard
+                                    icon="📄"
+                                    label="Resume Questions"
+                                    value={totalResumeQuestions}
+                                    accent="hover:border-violet-200"
+                                />
+                                <SummaryCard
+                                    icon="🗣️"
+                                    label="Behavioral Questions"
+                                    value={interviewData.behavioralQuestions.length}
+                                    accent="hover:border-cyan-200"
+                                />
+                                <SummaryCard
+                                    icon="⌨️"
+                                    label="Coding Topics"
+                                    value={interviewData.codingTopics.length}
+                                    accent="hover:border-amber-200"
+                                />
+                                <SummaryCard
+                                    icon="🎯"
+                                    label="Target Role"
+                                    value={resumeData?.jobTitle || "N/A"}
+                                    accent="hover:border-indigo-200"
+                                />
+                                <SummaryCard
+                                    icon="🏢"
+                                    label="Company"
+                                    value={resumeData?.companyName || "Not specified"}
+                                    accent="hover:border-slate-200"
+                                />
+                                <SummaryCard
+                                    icon="⏱️"
+                                    label="Est. Duration"
+                                    value={interviewData.interviewSummary?.estimatedDuration || "45-60 min"}
+                                    accent="hover:border-emerald-200"
+                                />
+                                <div className="bg-white border rounded-xl p-3 shadow-sm hover:shadow-md transition-all duration-200 hover:border-rose-200">
+                                    <div className="flex items-center gap-2 mb-1.5">
+                                        <span className="text-lg">🔥</span>
+                                        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Top Skills Evaluated</p>
+                                    </div>
+                                    <div className="flex flex-wrap gap-1">
+                                        {(interviewData.interviewSummary?.topSkillsEvaluated || normalized?.extractedSkills?.slice(0, 3) || []).map((skill, i) => (
+                                            <span key={i} className="px-1.5 py-0.5 text-[9px] font-semibold rounded bg-rose-50 text-rose-700 border border-rose-100">
+                                                {skill}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         {/* ═══════════ SECTION 1: TECHNICAL INTERVIEW QUESTIONS ═══════════ */}
                         <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
                             <div className="flex items-center gap-2 mb-4 border-b border-gray-100 pb-3">
@@ -377,38 +810,81 @@ export default function InterviewPreparation() {
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                {interviewData.technicalQuestions.map((q, i) => (
-                                    <div
-                                        key={i}
-                                        className="border border-gray-100 rounded-xl p-3.5 hover:border-teal-200 hover:bg-teal-50/20 transition-all duration-200 cursor-pointer"
-                                        onClick={() => toggleQuestion(`tech-${i}`)}
-                                    >
-                                        <div className="flex items-start justify-between gap-2">
-                                            <div className="flex items-start gap-2 flex-1">
-                                                <span className="text-[10px] font-black text-gray-400 bg-gray-100 rounded-full w-5 h-5 flex items-center justify-center shrink-0 mt-0.5">
-                                                    {i + 1}
-                                                </span>
-                                                <p className="text-xs font-semibold text-gray-800 leading-relaxed">{q.question}</p>
-                                            </div>
-                                            <DifficultyBadge level={q.difficulty} />
-                                        </div>
-
-                                        {/* Expected Topics */}
-                                        <div className={cn(
-                                            "mt-2.5 pl-7 transition-all duration-200",
-                                            expandedQuestions[`tech-${i}`] ? "opacity-100 max-h-40" : "opacity-70 max-h-20 overflow-hidden"
-                                        )}>
-                                            <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Expected Topics</span>
-                                            <div className="flex flex-wrap gap-1">
-                                                {q.expectedTopics.map((topic, j) => (
-                                                    <span key={j} className="px-2 py-0.5 text-[9px] font-medium rounded bg-indigo-50 text-indigo-700 border border-indigo-100">
-                                                        {topic}
+                                {interviewData.technicalQuestions.map((q, i) => {
+                                    const qKey = `tech-${i}`;
+                                    return (
+                                        <div
+                                            key={i}
+                                            className="border border-gray-100 rounded-xl p-3.5 hover:border-teal-200 hover:bg-teal-50/20 transition-all duration-200"
+                                        >
+                                            <div
+                                                className="flex items-start justify-between gap-2 cursor-pointer"
+                                                onClick={() => toggleQuestion(qKey)}
+                                            >
+                                                <div className="flex items-start gap-2 flex-1">
+                                                    <span className="text-[10px] font-black text-gray-400 bg-gray-100 rounded-full w-5 h-5 flex items-center justify-center shrink-0 mt-0.5">
+                                                        {i + 1}
                                                     </span>
-                                                ))}
+                                                    <p className="text-xs font-semibold text-gray-800 leading-relaxed">{q.question}</p>
+                                                </div>
+                                                <DifficultyBadge level={q.difficulty} />
+                                            </div>
+
+                                            {/* Expected Topics */}
+                                            <div className={cn(
+                                                "mt-2.5 pl-7 transition-all duration-200",
+                                                expandedQuestions[qKey] ? "opacity-100 max-h-40" : "opacity-70 max-h-20 overflow-hidden"
+                                            )}>
+                                                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Expected Topics</span>
+                                                <div className="flex flex-wrap gap-1">
+                                                    {q.expectedTopics.map((topic, j) => (
+                                                        <span key={j} className="px-2 py-0.5 text-[9px] font-medium rounded bg-indigo-50 text-indigo-700 border border-indigo-100">
+                                                            {topic}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            {/* Show AI Answer Button */}
+                                            <div className="mt-3 pl-7">
+                                                {aiErrors[qKey] && (
+                                                    <div className="mb-2 text-[10px] text-red-600 bg-red-50 p-2 rounded border border-red-100 flex items-center gap-1.5">
+                                                        <span>⚠️</span>
+                                                        <span>Failed to generate answer. Please try again.</span>
+                                                    </div>
+                                                )}
+                                                {!aiAnswers[qKey] && (
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleShowAIAnswer(qKey, q.question);
+                                                        }}
+                                                        disabled={loadingAnswer === qKey}
+                                                        className={cn(
+                                                            "inline-flex items-center gap-1.5 text-[10px] font-bold px-3 py-1.5 rounded-lg border transition-all duration-200 cursor-pointer",
+                                                            loadingAnswer === qKey
+                                                                ? "bg-gray-50 text-gray-400 border-gray-200 cursor-wait"
+                                                                : "bg-gradient-to-r from-teal-50 to-cyan-50 text-teal-700 border-teal-200 hover:from-teal-100 hover:to-cyan-100 hover:shadow-sm"
+                                                        )}
+                                                    >
+                                                        {loadingAnswer === qKey ? (
+                                                            <>
+                                                                <div className="w-3 h-3 border-2 border-gray-300 border-t-teal-500 rounded-full animate-spin" />
+                                                                Generating...
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <span>{aiErrors[qKey] ? "🔄" : "✨"}</span>
+                                                                {aiErrors[qKey] ? "Retry Generation" : "Show AI Answer"}
+                                                            </>
+                                                        )}
+                                                    </button>
+                                                )}
+                                                {aiAnswers[qKey] && <AIAnswerPanel answer={aiAnswers[qKey]} />}
                                             </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         </div>
 
@@ -418,7 +894,7 @@ export default function InterviewPreparation() {
                                 <span className="text-lg">📋</span>
                                 <div>
                                     <h2 className="text-sm font-bold text-gray-800">Resume-Based Questions</h2>
-                                    <p className="text-[11px] text-gray-400 mt-0.5">Deep-dive questions about your projects and experience</p>
+                                    <p className="text-[11px] text-gray-400 mt-0.5">Project-specific deep-dive questions about your experience</p>
                                 </div>
                                 <span className="ml-auto text-xs text-violet-600 font-bold bg-violet-50 px-2 py-0.5 rounded-full border border-violet-100">
                                     {interviewData.resumeBasedQuestions.length} Projects
@@ -428,19 +904,77 @@ export default function InterviewPreparation() {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {interviewData.resumeBasedQuestions.map((project, i) => (
                                     <div key={i} className="border border-gray-100 rounded-xl p-4 hover:border-violet-200 hover:bg-violet-50/10 transition-all duration-200">
-                                        <div className="flex items-center gap-2 mb-3">
+                                        <div className="flex items-center gap-2 mb-2">
                                             <span className="text-sm">🚀</span>
                                             <h3 className="text-xs font-black text-gray-900 uppercase tracking-wide">{project.projectName}</h3>
                                         </div>
-                                        <div className="space-y-2">
-                                            {project.questions.map((question, j) => (
-                                                <div key={j} className="flex items-start gap-2 bg-violet-50/50 rounded-lg px-3 py-2">
-                                                    <span className="text-[9px] font-bold text-violet-500 bg-violet-100 rounded-full w-4 h-4 flex items-center justify-center shrink-0 mt-0.5">
-                                                        {j + 1}
+
+                                        {/* Technology badges */}
+                                        {project.technologies && project.technologies.length > 0 && (
+                                            <div className="flex flex-wrap gap-1 mb-3">
+                                                {project.technologies.map((tech, t) => (
+                                                    <span key={t} className="px-1.5 py-0.5 text-[8px] font-bold rounded bg-violet-100 text-violet-600 border border-violet-200">
+                                                        {tech}
                                                     </span>
-                                                    <p className="text-[11px] text-gray-700 font-medium leading-relaxed">{question}</p>
-                                                </div>
-                                            ))}
+                                                ))}
+                                            </div>
+                                        )}
+
+                                        <div className="space-y-2">
+                                            {project.questions.map((question, j) => {
+                                                const rqKey = `resume-${i}-${j}`;
+                                                return (
+                                                    <div key={j}>
+                                                        <div className="flex items-start gap-2 bg-violet-50/50 rounded-lg px-3 py-2">
+                                                            <span className="text-[9px] font-bold text-violet-500 bg-violet-100 rounded-full w-4 h-4 flex items-center justify-center shrink-0 mt-0.5">
+                                                                {j + 1}
+                                                            </span>
+                                                            <div className="flex-1">
+                                                                <p className="text-[11px] text-gray-700 font-medium leading-relaxed">{question}</p>
+
+                                                                {/* Show AI Answer Button */}
+                                                                <div className="mt-2">
+                                                                    {aiErrors[rqKey] && (
+                                                                        <div className="mb-2 text-[10px] text-red-600 bg-red-50 p-2 rounded border border-red-100 flex items-center gap-1.5">
+                                                                            <span>⚠️</span>
+                                                                            <span>Failed to generate answer. Please try again.</span>
+                                                                        </div>
+                                                                    )}
+                                                                    {!aiAnswers[rqKey] && (
+                                                                        <button
+                                                                            onClick={() => handleShowAIAnswer(
+                                                                                rqKey,
+                                                                                question,
+                                                                                `Project: ${project.projectName}, Technologies: ${(project.technologies || []).join(", ")}`
+                                                                            )}
+                                                                            disabled={loadingAnswer === rqKey}
+                                                                            className={cn(
+                                                                                "inline-flex items-center gap-1.5 text-[9px] font-bold px-2.5 py-1 rounded-md border transition-all duration-200 cursor-pointer",
+                                                                                loadingAnswer === rqKey
+                                                                                    ? "bg-gray-50 text-gray-400 border-gray-200 cursor-wait"
+                                                                                    : "bg-white text-violet-600 border-violet-200 hover:bg-violet-50 hover:shadow-sm"
+                                                                            )}
+                                                                        >
+                                                                            {loadingAnswer === rqKey ? (
+                                                                                <>
+                                                                                    <div className="w-2.5 h-2.5 border-2 border-gray-300 border-t-violet-500 rounded-full animate-spin" />
+                                                                                    Generating...
+                                                                                </>
+                                                                            ) : (
+                                                                                <>
+                                                                                    <span>{aiErrors[rqKey] ? "🔄" : "✨"}</span>
+                                                                                    {aiErrors[rqKey] ? "Retry Generation" : "Show AI Answer"}
+                                                                                </>
+                                                                            )}
+                                                                        </button>
+                                                                    )}
+                                                                    {aiAnswers[rqKey] && <AIAnswerPanel answer={aiAnswers[rqKey]} />}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
                                         </div>
                                     </div>
                                 ))}
@@ -453,7 +987,7 @@ export default function InterviewPreparation() {
                                 <span className="text-lg">🗣️</span>
                                 <div>
                                     <h2 className="text-sm font-bold text-gray-800">Behavioral Questions</h2>
-                                    <p className="text-[11px] text-gray-400 mt-0.5">Practice using the STAR method (Situation, Task, Action, Result)</p>
+                                    <p className="text-[11px] text-gray-400 mt-0.5">Practice using the STAR method with AI coaching guidance</p>
                                 </div>
                                 <span className="ml-auto text-xs text-cyan-600 font-bold bg-cyan-50 px-2 py-0.5 rounded-full border border-cyan-100">
                                     {interviewData.behavioralQuestions.length} Q
@@ -461,19 +995,40 @@ export default function InterviewPreparation() {
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                {interviewData.behavioralQuestions.map((question, i) => (
-                                    <div key={i} className="flex items-start gap-3 border border-gray-100 rounded-xl p-3.5 hover:border-cyan-200 hover:bg-cyan-50/20 transition-all duration-200">
-                                        <span className="text-[10px] font-black text-white bg-gradient-to-br from-teal-500 to-cyan-500 rounded-full w-6 h-6 flex items-center justify-center shrink-0 mt-0.5 shadow-sm">
-                                            {i + 1}
-                                        </span>
-                                        <div className="flex-1">
-                                            <p className="text-xs font-semibold text-gray-800 leading-relaxed">{question}</p>
-                                            <p className="text-[10px] text-gray-400 mt-1.5 italic">
-                                                💡 Tip: Use the STAR method to structure your answer
-                                            </p>
+                                {interviewData.behavioralQuestions.map((bq, i) => {
+                                    const starKey = `bq-star-${i}`;
+                                    const isStarOpen = expandedStar[starKey];
+
+                                    return (
+                                        <div key={i} className="border border-gray-100 rounded-xl p-3.5 hover:border-cyan-200 hover:bg-cyan-50/20 transition-all duration-200">
+                                            <div className="flex items-start gap-3">
+                                                <span className="text-[10px] font-black text-white bg-gradient-to-br from-teal-500 to-cyan-500 rounded-full w-6 h-6 flex items-center justify-center shrink-0 mt-0.5 shadow-sm">
+                                                    {i + 1}
+                                                </span>
+                                                <div className="flex-1">
+                                                    <p className="text-xs font-semibold text-gray-800 leading-relaxed">{bq.question}</p>
+                                                    <p className="text-[10px] text-gray-400 mt-1.5 italic">
+                                                        💡 Tip: Use the STAR method to structure your answer
+                                                    </p>
+
+                                                    {/* STAR Coaching Toggle */}
+                                                    <button
+                                                        onClick={() => toggleStar(starKey)}
+                                                        className="mt-2 inline-flex items-center gap-1.5 text-[10px] font-bold px-3 py-1.5 rounded-lg border bg-gradient-to-r from-cyan-50 to-blue-50 text-cyan-700 border-cyan-200 hover:from-cyan-100 hover:to-blue-100 hover:shadow-sm transition-all duration-200 cursor-pointer"
+                                                    >
+                                                        <span>{isStarOpen ? "🔽" : "▶️"}</span>
+                                                        {isStarOpen ? "Hide STAR Coaching" : "Show STAR Coaching"}
+                                                    </button>
+
+                                                    {/* STAR Coaching Panel */}
+                                                    {isStarOpen && bq.starCoaching && (
+                                                        <STARCoachingPanel coaching={bq.starCoaching} />
+                                                    )}
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         </div>
 
@@ -512,50 +1067,51 @@ export default function InterviewPreparation() {
                             </div>
                         </div>
 
-                        {/* ═══════════ SECTION 5: INTERVIEW READINESS SCORE ═══════════ */}
+                        {/* ═══════════ SECTION 5: PREPARATION STATUS ═══════════ */}
                         <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
-                            <div className="flex items-center gap-2 mb-5 border-b border-gray-100 pb-3">
-                                <span className="text-lg">📊</span>
+                            <div className="flex items-center gap-2 mb-4 border-b border-gray-100 pb-3">
+                                <span className="text-lg">📋</span>
                                 <div>
-                                    <h2 className="text-sm font-bold text-gray-800">Interview Readiness Score</h2>
-                                    <p className="text-[11px] text-gray-400 mt-0.5">How prepared you are based on your profile analysis</p>
+                                    <h2 className="text-sm font-bold text-gray-800">Preparation Status</h2>
+                                    <p className="text-[11px] text-gray-400 mt-0.5">Quick checklist for your upcoming interview</p>
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div className="flex items-center gap-2 bg-emerald-50/50 p-2.5 rounded-lg border border-emerald-100">
+                                    <span className="text-emerald-500">✅</span>
+                                    <span className="text-xs font-medium text-gray-800">Resume Ready</span>
+                                </div>
+                                <div className="flex items-center gap-2 bg-emerald-50/50 p-2.5 rounded-lg border border-emerald-100">
+                                    <span className="text-emerald-500">✅</span>
+                                    <span className="text-xs font-medium text-gray-800">Interview Questions Ready</span>
+                                </div>
+                                <div className="flex items-center gap-2 bg-amber-50/50 p-2.5 rounded-lg border border-amber-100">
+                                    <span className="text-amber-500">⚠</span>
+                                    <span className="text-xs font-medium text-gray-800">Review Skill Gaps</span>
+                                </div>
+                                <div className="flex items-center gap-2 bg-amber-50/50 p-2.5 rounded-lg border border-amber-100">
+                                    <span className="text-amber-500">⚠</span>
+                                    <span className="text-xs font-medium text-gray-800">Practice Project Explanations</span>
+                                </div>
+                                <div className="flex items-center gap-2 bg-amber-50/50 p-2.5 rounded-lg border border-amber-100 md:col-span-2">
+                                    <span className="text-amber-500">⚠</span>
+                                    <span className="text-xs font-medium text-gray-800">Prepare STAR Stories</span>
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-5">
-                                <ProgressBar
-                                    label="🔧 Technical Readiness"
-                                    value={interviewData.readinessScores.technical}
-                                    color="bg-gradient-to-r from-teal-500 to-emerald-500"
-                                />
-                                <ProgressBar
-                                    label="📄 Resume Readiness"
-                                    value={interviewData.readinessScores.resume}
-                                    color="bg-gradient-to-r from-indigo-500 to-violet-500"
-                                />
-                                <ProgressBar
-                                    label="🗣️ Communication Readiness"
-                                    value={interviewData.readinessScores.communication}
-                                    color="bg-gradient-to-r from-cyan-500 to-blue-500"
-                                />
-                                <div className="lg:col-span-2 mt-2 pt-4 border-t border-gray-100">
-                                    <ProgressBar
-                                        label="⭐ Overall Interview Readiness"
-                                        value={interviewData.readinessScores.overall}
-                                        color="bg-gradient-to-r from-amber-500 to-orange-500"
-                                    />
+                            {/* AI Coaching Tip */}
+                            <div className="mt-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-lg p-3">
+                                <div className="flex items-start gap-2">
+                                    <span className="text-lg">💡</span>
+                                    <div>
+                                        <h3 className="text-[10px] font-bold text-blue-800 uppercase tracking-wider mb-0.5">AI Coaching Tip</h3>
+                                        <p className="text-xs text-blue-900 leading-relaxed font-medium">
+                                            {interviewData.coachingNotes && interviewData.coachingNotes.length > 0
+                                                ? interviewData.coachingNotes[0]
+                                                : "Focus on explaining your projects confidently and review core technical concepts before interviewing."}
+                                        </p>
+                                    </div>
                                 </div>
-                            </div>
-
-                            {/* Readiness summary */}
-                            <div className="mt-5 bg-gradient-to-r from-teal-50 to-cyan-50 border border-teal-100 rounded-xl p-4">
-                                <p className="text-xs text-teal-800 font-medium leading-relaxed">
-                                    {interviewData.readinessScores.overall >= 80
-                                        ? "🎉 Excellent! You're well-prepared for your interview. Focus on practicing your answers out loud and fine-tuning your responses."
-                                        : interviewData.readinessScores.overall >= 60
-                                            ? "👍 Good progress! Review the areas with lower scores and practice the technical and behavioral questions above."
-                                            : "📚 Keep preparing! Focus on strengthening your technical skills and practicing the questions above. Consider filling the skill gaps identified in your career analysis."}
-                                </p>
                             </div>
                         </div>
 
