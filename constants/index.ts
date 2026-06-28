@@ -287,8 +287,8 @@ Respond in this exact JSON format:
 {
   "idealAnswer": "...",
   "keyPoints": ["...", "...", "..."],
-  "commonMistakes": ["...", "...", "..."],
-  "followUpQuestions": ["...", "...", "..."]
+  "commonMistakes": ["...", "..."],
+  "followUpQuestions": ["...", "..."]
 }
 
 Return ONLY the raw JSON object, without markdown code block syntax.`;
